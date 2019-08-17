@@ -37,7 +37,12 @@
 
 UniversalTelegramBot::UniversalTelegramBot(String token, Client &client) {
   _token = token;
+  _host = HOST;
   this->client = &client;
+}
+
+void UniversalTelegramBot::setHost(String host) {
+  this->_host = host;
 }
 
 String UniversalTelegramBot::sendGetToTelegram(String command) {
@@ -49,7 +54,7 @@ String UniversalTelegramBot::sendGetToTelegram(String command) {
   if (!client->connected()) {
     if (_debug)
       Serial.println(F("[BOT]Connecting to server"));
-    if (!client->connect(HOST, SSL_PORT)) {
+    if (!client->connect(this->_host, SSL_PORT)) {
       if (_debug)
         Serial.println(F("[BOT]Conection error"));
     }
@@ -101,7 +106,7 @@ String UniversalTelegramBot::sendPostToTelegram(String command,
   if (!client->connected()) {
     if (_debug)
       Serial.println(F("[BOT Client]Connecting to server"));
-    if (!client->connect(HOST, SSL_PORT)) {
+    if (!client->connect(this->_host, SSL_PORT)) {
       if (_debug)
         Serial.println(F("[BOT Client]Conection error"));
     }
@@ -112,7 +117,7 @@ String UniversalTelegramBot::sendPostToTelegram(String command,
     client->println(F(" HTTP/1.1"));
     // Host header
     client->print(F("Host:"));
-    client->println(HOST);
+    client->println(this->_host);
     // JSON content type
     client->println(F("Content-Type: application/json"));
 
@@ -189,7 +194,7 @@ String UniversalTelegramBot::sendMultipartFormDataToTelegram(
   if (!client->connected()) {
     if (_debug)
       Serial.println(F("[BOT Client]Connecting to server"));
-    if (!client->connect(HOST, SSL_PORT)) {
+    if (!client->connect(this->_host, SSL_PORT)) {
       if (_debug)
         Serial.println(F("[BOT Client]Conection error"));
     }
@@ -219,7 +224,7 @@ String UniversalTelegramBot::sendMultipartFormDataToTelegram(
     client->println(F(" HTTP/1.1"));
     // Host header
     client->print(F("Host: "));
-    client->println(HOST);
+    client->println(this->_host);
     client->println(F("User-Agent: arduino/1.0"));
     client->println(F("Accept: */*"));
 

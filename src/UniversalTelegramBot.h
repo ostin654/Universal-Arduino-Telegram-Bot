@@ -49,6 +49,7 @@ struct telegramMessage {
 class UniversalTelegramBot {
 public:
   UniversalTelegramBot(String token, Client &client);
+  void setHost(String host);
   String sendGetToTelegram(String command);
   String sendPostToTelegram(String command, JsonObject &payload);
   String
@@ -93,6 +94,7 @@ public:
 private:
   // JsonObject * parseUpdates(String response);
   String _token;
+  String _host;
   Client *client;
   bool processResult(JsonObject &result, int messageIndex);
   void closeClient();
