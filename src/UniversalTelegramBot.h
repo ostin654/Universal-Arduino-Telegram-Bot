@@ -95,6 +95,7 @@ private:
   // JsonObject * parseUpdates(String response);
   String _token;
   String _host;
+  //char _host[128];
   Client *client;
   bool processResult(JsonObject &result, int messageIndex);
   void closeClient();

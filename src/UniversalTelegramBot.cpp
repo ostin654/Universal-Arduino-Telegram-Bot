@@ -37,24 +37,28 @@
 
 UniversalTelegramBot::UniversalTelegramBot(String token, Client &client) {
   _token = token;
-  _host = HOST;
+  setHost(HOST);
   this->client = &client;
 }
 
 void UniversalTelegramBot::setHost(String host) {
   this->_host = host;
+  //host.toCharArray(this->_host, host.length()+1);
 }
 
 String UniversalTelegramBot::sendGetToTelegram(String command) {
-  String mess = "";
+  String body = "";
+  String headers = "";
   long now;
-  bool avail;
+  bool responseReceived;
 
   // Connect with api.telegram.org if not already connected
   if (!client->connected()) {
-    if (_debug)
-      Serial.println(F("[BOT]Connecting to server"));
-    if (!client->connect(this->_host, SSL_PORT)) {
+    if (_debug) {
+      Serial.print(F("[BOT]Connecting to server "));
+      Serial.println(this->_host);
+    }
+    if (!client->connect(this->_host.c_str(), SSL_PORT)) {
       if (_debug)
         Serial.println(F("[BOT]Conection error"));
     }
@@ -64,26 +68,57 @@ String UniversalTelegramBot::sendGetToTelegram(String command) {
     if (_debug)
       Serial.println(F(".... connected to server"));
 
-    String a = "";
-    char c;
+    client->print("GET /" + command);
+    client->println(F(" HTTP/1.1"));
+    if (_debug) {
+      Serial.print("GET /" + command);
+      Serial.println(F(" HTTP/1.1"));
+    }
+    client->print(F("Host:"));
+    client->println(this->_host);
+    if (_debug) {
+      Serial.print(F("Host:"));
+      Serial.println(this->_host);
+    }
+    client->println(F("User-Agent: Universal Telegram Bot v 1.1.0"));
+    client->println(F("Accept: */*"));
+    client->println();
+
     int ch_count = 0;
-    client->println("GET /" + command);
+    char c;
     now = millis();
-    avail = false;
-    while (millis() - now < longPoll * 1000 + waitForResponse) {
+    responseReceived = false;
+    bool finishedHeaders = false;
+    bool currentLineIsBlank = true;
+    while (millis() - now < waitForResponse) {
       while (client->available()) {
         char c = client->read();
-        // Serial.write(c);
-        if (ch_count < maxMessageLength) {
-          mess = mess + c;
-          ch_count++;
+        responseReceived = true;
+
+        if (!finishedHeaders) {
+          if (currentLineIsBlank && c == '\n') {
+            finishedHeaders = true;
+          } else {
+            headers = headers + c;
+          }
+        } else {
+          if (ch_count < maxMessageLength) {
+            body = body + c;
+            ch_count++;
+          }
         }
-        avail = true;
+
+        if (c == '\n') {
+          currentLineIsBlank = true;
+        } else if (c != '\r') {
+          currentLineIsBlank = false;
+        }
       }
-      if (avail) {
+
+      if (responseReceived) {
         if (_debug) {
           Serial.println();
-          Serial.println(mess);
+          Serial.println(body);
           Serial.println();
         }
         break;
@@ -91,7 +126,7 @@ String UniversalTelegramBot::sendGetToTelegram(String command) {
     }
   }
 
-  return mess;
+  return body;
 }
 
 String UniversalTelegramBot::sendPostToTelegram(String command,
@@ -106,7 +141,7 @@ String UniversalTelegramBot::sendPostToTelegram(String command,
   if (!client->connected()) {
     if (_debug)
       Serial.println(F("[BOT Client]Connecting to server"));
-    if (!client->connect(this->_host, SSL_PORT)) {
+    if (!client->connect(this->_host.c_str(), SSL_PORT)) {
       if (_debug)
         Serial.println(F("[BOT Client]Conection error"));
     }
@@ -118,6 +153,8 @@ String UniversalTelegramBot::sendPostToTelegram(String command,
     // Host header
     client->print(F("Host:"));
     client->println(this->_host);
+    client->println(F("User-Agent: Universal Telegram Bot v 1.1.0"));
+    client->println(F("Accept: */*"));
     // JSON content type
     client->println(F("Content-Type: application/json"));
 
@@ -194,7 +231,7 @@ String UniversalTelegramBot::sendMultipartFormDataToTelegram(
   if (!client->connected()) {
     if (_debug)
       Serial.println(F("[BOT Client]Connecting to server"));
-    if (!client->connect(this->_host, SSL_PORT)) {
+    if (!client->connect(this->_host.c_str(), SSL_PORT)) {
       if (_debug)
         Serial.println(F("[BOT Client]Conection error"));
     }
@@ -225,7 +262,7 @@ String UniversalTelegramBot::sendMultipartFormDataToTelegram(
     // Host header
     client->print(F("Host: "));
     client->println(this->_host);
-    client->println(F("User-Agent: arduino/1.0"));
+    client->println(F("User-Agent: Universal Telegram Bot v 1.1.0"));
     client->println(F("Accept: */*"));
 
     int contentLength =
